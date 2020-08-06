@@ -1,0 +1,9 @@
+directories:
+  output: dist
+  buildResources: build
+appId: com.anonymous.package-installer
+linux:
+  target:
+    - deb
+  category: Utility
+electronVersion: 9.1.2

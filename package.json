@@ -1,0 +1,29 @@
+{
+  "name": "appinstaller",
+  "version": "1.0.3",
+  "description": "A Electron based app for installing .deb files",
+  "main": "index.js",
+  "dependencies": {
+    "sudo-prompt": "^9.2.1"
+  },
+  "homepage": "",
+  "devDependencies": {
+    "electron": "^9.1.2",
+    "electron-builder": "^22.8.0"
+  },
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "author": "Anonymous <bob@gmail.com>",
+  "license": "ISC",
+  "build": {
+    "appId": "com.anonymous.package-installer",
+    "linux": {
+      "target": [
+        "deb"
+      ],
+      "category": "Utility"
+    }
+  }
+}
