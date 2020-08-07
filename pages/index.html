@@ -38,7 +38,7 @@
         <h3>Installing <span id="pkgName">PACKAGE_NAME</span></h3>
     </div>
     <div id="container">
-        <progress></progress>
+        <progress max="100" value="0" id="p"></progress>
     </div>
     <div id="container">
         <textarea readonly id="v">Verbose install</textarea>
@@ -64,7 +64,16 @@
     })
 
     ipcRenderer.on("data", (even, result) => {
-        document.getElementById("v").nodeValue += "\n" + result;
+
+        var v = document.getElementById("v");
+
+        v.textContent += "\n" + result;
+
+        v.scroll(0,9999999999999);
+    })
+
+    ipcRenderer.on("percentage",(event,result) => {
+        document.getElementById("p").value = result;
     })
 
     ipcRenderer.send("request-state");

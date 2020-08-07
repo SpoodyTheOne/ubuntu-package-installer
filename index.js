@@ -2,7 +2,7 @@
 const electron = require("electron");
 const { exec } = require("child_process");
 
-var sudo = require('sudo-prompt');
+//var sudo = require('sudo-prompt');
 const { ipcMain } = require("electron");
 var options = {
     name: 'Package Installer',
@@ -35,17 +35,38 @@ electron.ipcMain.on("request-state", (event, args) => {
     event.reply("state", file);
 
     if (file != undefined) {
-        sudo.exec("apt install " + file + " -y", options,
-            function (error, stdout, stderr) {
-                if (error) {
-                    event.reply("msg", error.message);
-                    //throw error;
+        var p = exec(`pkexec --disable-internal-agent /bin/bash -c "sudo apt install '${file.replace(/"/g,"\\\"").replace(/'/g,"\\'")}' -y"`);
+
+        var latestE = "";
+
+        p.stdout.on("data", (data) => {
+            console.log(data);
+
+            if (data.startsWith("("))
+            {
+                var percentage = data.match(/([0-9])+%/g)[0];
+
+                if (percentage != undefined)
+                {
+                    event.reply("percentage",percentage.replace(/%/g,""));
                 }
-
-                event.reply("msg","Finished Installing");
-
             }
-        );
+
+            event.reply("data", data);
+        })
+
+        p.stderr.on("data", (data) => {
+            latestE = data;
+
+            event.reply("data", data);
+        })
+
+        p.on("close", (data) => {
+            if (data == 0)
+                event.reply("msg", "Finished installing");
+            else
+                event.reply("msg", latestE);
+        })
     }
 })
 

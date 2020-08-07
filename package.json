@@ -1,12 +1,12 @@
 {
   "name": "appinstaller",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A Electron based app for installing .deb files",
   "main": "index.js",
   "dependencies": {
     "sudo-prompt": "^9.2.1"
   },
-  "homepage": "",
+  "homepage": "https://github.com/SpoodyTheOne/ubuntu-package-installer#readme",
   "devDependencies": {
     "electron": "^9.1.2",
     "electron-builder": "^22.8.0"
@@ -15,7 +15,7 @@
     "start": "electron .",
     "dist": "electron-builder"
   },
-  "author": "Anonymous <bob@gmail.com>",
+  "author": "SpoodyTheOne <sxsgamer@gmail.com>",
   "license": "ISC",
   "build": {
     "appId": "com.anonymous.package-installer",
@@ -25,5 +25,12 @@
       ],
       "category": "Utility"
     }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SpoodyTheOne/ubuntu-package-installer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SpoodyTheOne/ubuntu-package-installer/issues"
   }
 }
