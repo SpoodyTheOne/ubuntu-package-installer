@@ -24,24 +24,78 @@
         }
 
         textarea {
-            background-color:#26242b;
+            background-color: #26242b;
             font-family: monospace;
-            width:50%;
-            height:100px;
+            width: 50%;
+            height: 70vh;
             resize: none;
+        }
+
+        #installing,
+        #selecting {
+            display: none;
+        }
+
+        #selecting {
+            text-align: center;
+        }
+
+        #selecting input {
+            width: 80%;
+            font-size: 25px;
+        }
+
+        #selecting ul {
+            display: flex;
+            list-style-type: none;
+            flex-wrap: wrap;
+        }
+
+        #selecting ul li {
+            margin: 8px;
+            background-color: #212025;
+            padding: 5px;
+            border-radius: 5px;
+        }
+
+        #selecting ul li h4 {
+            margin: 0px;
+        }
+
+        #selecting ul li .version {
+            font-weight: normal;
+            font-size: 12px;
+        }
+
+        #selecting ul li {
+            text-align: center;
+        }
+
+        input {
+            background-color: #212025;
+            border: none;
+            padding: 3px;
         }
     </style>
 </head>
 
 <body>
-    <div id="container">
-        <h3>Installing <span id="pkgName">PACKAGE_NAME</span></h3>
+    <h1 id="loading">Loading...</h1>
+    <div id="installing">
+        <div id="container">
+            <h3>Installing <span id="pkgName">PACKAGE_NAME</span></h3>
+        </div>
+        <div id="container">
+            <progress max="100" value="0" id="p"></progress>
+        </div>
+        <div id="container">
+            <textarea readonly id="v"></textarea>
+        </div>
     </div>
-    <div id="container">
-        <progress max="100" value="0" id="p"></progress>
-    </div>
-    <div id="container">
-        <textarea readonly id="v">Verbose install</textarea>
+    <div id="selecting">
+        <input type="text" onchange="search(event)" placeholder="Search package (supports regex)">
+        <ul>
+        </ul>
     </div>
 </body>
 <script>
@@ -49,18 +103,47 @@
 
     ipcRenderer.on("state", (even, result) => {
         if (result != undefined) {
-            var n = result.match(/([^\/\\]+)$/g)[0].replace(/'/g, "").replace(/"/g, "");
+            var n = result.match(/([^\/\\]+)$/g)[0].replace(/'/g, "").replace(/"/g, "").replace("\n","");
 
             document.getElementById("pkgName").innerText = n;
+
+            document.getElementById("installing").style.display = "block";
         } else {
-            alert("No argument recieved");
-            ipcRenderer.send("exit");
+            document.getElementById("selecting").style.display = "block";
         }
+
+        document.getElementById("loading").style.display = "none";
     })
 
     ipcRenderer.on("msg", (even, result) => {
         alert(result);
         ipcRenderer.send("exit");
+    })
+
+    ipcRenderer.on("install-finish", (event, data) => {
+        var c = confirm("Finished installing\nInstall more?")
+
+        if (c) {
+            document.getElementById("selecting").style.display = "block";
+            document.getElementById("installing").style.display = "none";
+            
+            document.querySelector("#selecting ul").innerHTML = "";
+        } else {
+            ipcRenderer.send("exit");
+        }
+    })
+
+    ipcRenderer.on("uninstall-finish", (event, data) => {
+        var c = confirm("Finished Uninstall\n return to select?")
+
+        if (c) {
+            document.getElementById("selecting").style.display = "block";
+            document.getElementById("installing").style.display = "none";
+
+            document.querySelector("#selecting ul").innerHTML = "";
+        } else {
+            ipcRenderer.send("exit");
+        }
     })
 
     ipcRenderer.on("data", (even, result) => {
@@ -69,12 +152,76 @@
 
         v.textContent += "\n" + result;
 
-        v.scroll(0,9999999999999);
+        v.scroll(0, 9999999999999);
     })
 
-    ipcRenderer.on("percentage",(event,result) => {
+    ipcRenderer.on("percentage", (event, result) => {
         document.getElementById("p").value = result;
     })
+
+    ipcRenderer.on("packages", (event, result) => {
+        var u = document.querySelector("#selecting ul");
+
+        u.innerHTML = "";
+
+        result.forEach(p => {
+            var v = document.createElement("li");
+
+            v.innerHTML = `<h4>${p.name} <span class="version">${p.version} ${p.architecture}</span></h4><span class="installed" style="color:${p.installed.startsWith("installed") ? "#27ae60" : "#ee1c1c"}">${p.installed}</span><br><button style="cursor:pointer;background-color:${!p.installed.startsWith("installed") ? "#27ae60" : "#ee1c1c"};border:none;padding:3px;border-radius:3px">${p.installed.startsWith("installed") ? "Uni" : "I"}nstall</button>`
+
+            var btns = v.getElementsByTagName("button")
+
+            console.log(btns);
+
+            if (btns.length > 0)
+            {
+                btns[0].package = p.name;
+                btns[0].onclick = p.installed.startsWith("installed") ? uninstall : install;
+            }
+
+            u.appendChild(v);
+        })
+    })
+
+    function search(name) {
+        ipcRenderer.send("search", name.target.value);
+    }
+
+    function install(event) {
+        console.log("installing")
+
+        var n = event.target.package.match(/([^\/\\]+)$/g)[0].replace(/'/g, "").replace(/"/g, "").replace("\n","");
+
+        if (confirm("Install " + n + "?")) {
+
+            document.getElementById("pkgName").innerText = n;
+
+            document.getElementById("v").textContent = ""
+
+            document.getElementById("installing").style.display = "block";
+            document.getElementById("selecting").style.display = "none";
+
+            ipcRenderer.send("install", event.target.package.replace("\n",""));
+        }
+    }
+
+    function uninstall(event)
+    {
+        var n = event.target.package.match(/([^\/\\]+)$/g)[0].replace(/'/g, "").replace(/"/g, "").replace("\n","");
+
+        if (confirm("Uninstall " + n))
+        {
+            document.getElementById("pkgName").innerText = n;
+
+            document.getElementById("v").textContent = ""
+
+            document.getElementById("installing").style.display = "block";
+            document.getElementById("selecting").style.display = "none";
+
+            document.querySelector("#selecting ul").innerHTML = "";
+            ipcRenderer.send("uninstall",event.target.package.replace("\n",""));
+        }
+    }
 
     ipcRenderer.send("request-state");
 </script>
